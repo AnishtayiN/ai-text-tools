@@ -92,15 +92,22 @@ speakBtn.onclick=()=>{
   const text=ttsText.value.trim();
   if(!text){toast('⚠️ لطفاً متنی بنویسید.');return;}
   speechSynthesis.cancel();
+  // ensure voices are loaded
+  if(!voices.length) loadVoices();
   const u=new SpeechSynthesisUtterance(text);
-  u.lang=langSelect.value; // set to Persian (fa-IR) by default
+  u.lang=langSelect.value;
   u.rate=Number(rate.value);
   u.pitch=Number(pitch.value);
-  const v=getVoice();if(v)u.voice=v;
+  let v=getVoice();
+  if(!v && voices.length){
+    // fallback: pick any Persian voice, or first available
+    v=voices.find(v=>v.lang.startsWith('fa')) || voices[0];
+  }
+  if(v) u.voice=v;
   u.onstart=()=>{speakBtn.disabled=true;pauseBtn.disabled=false;stopBtn.disabled=false;};
   u.onend=u.onerror=()=>{speakBtn.disabled=false;pauseBtn.disabled=true;stopBtn.disabled=true;paused=false;pauseBtn.textContent='⏸️ مکث';};
   ttsUtter=u;
-  speechSynthesis.speak(u);
+  try{ speechSynthesis.speak(u); }catch(e){ toast('⚠️ خطا در پخش: '+e.message); }
 };
 
 pauseBtn.onclick=()=>{
