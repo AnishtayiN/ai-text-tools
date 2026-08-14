@@ -1,0 +1,20 @@
+{
+  "name": "AI Text Tools | ابزارهای هوشمند متن و صدا",
+  "short_name": "AI Text Tools",
+  "description": "تبدیل متن به صدا، صدا به متن، خلاصه‌سازی و گسترش متن — رایگان",
+  "start_url": "/ai-text-tools/",
+  "scope": "/ai-text-tools/",
+  "display": "standalone",
+  "background_color": "#0f0f23",
+  "theme_color": "#0f0f23",
+  "dir": "rtl",
+  "lang": "fa",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

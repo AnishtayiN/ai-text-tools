@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI Text Tools | ابزارهای هوشمند متن و صدا</title>
+<meta name="description" content="تبدیل متن به صدا، صدا به متن، خلاصه‌سازی و گسترش متن — کاملاً رایگان و بدون ثبت‌نام">
+<meta name="theme-color" content="#0f0f23">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="progressBar"></div>
+
+<div class="container">
+  <header>
+    <div class="topbar">
+      <button id="themeToggle" class="icon-btn" title="تغییر تم">🌙</button>
+      <a href="https://github.com/AnishtayiN/ai-text-tools" target="_blank" rel="noopener" class="icon-btn" title="سورس‌کد">🐙</a>
+    </div>
+    <div class="logo">
+      <span class="logo-icon">🧠</span>
+      <h1>AI Text Tools</h1>
+    </div>
+    <p class="subtitle">تبدیل متن به صدا، صدا به متن، خلاصه‌سازی و گسترش متن — رایگان</p>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="tts">🗣️ متن به صدا</button>
+    <button class="tab" data-tab="stt">🎤 صدا به متن</button>
+    <button class="tab" data-tab="summary">📝 خلاصه‌سازی</button>
+    <button class="tab" data-tab="expand">📖 گسترش متن</button>
+  </nav>
+
+  <!-- ============ TTS ============ -->
+  <section class="tab-panel" id="panel-tts">
+    <div class="card">
+      <label for="ttsText">✍️ متنی که می‌خواهید به صدا تبدیل شود</label>
+      <div class="textarea-wrap">
+        <textarea id="ttsText" rows="7" placeholder="متن خود را اینجا بنویسید یا بچسبانید..."></textarea>
+        <div class="char-count" id="ttsCount">۰ کلمه · ۰ کاراکتر</div>
+      </div>
+      <div class="controls-grid">
+        <div class="control">
+          <label>🎙️ صدا</label>
+          <select id="voiceSelect"></select>
+        </div>
+        <div class="control">
+          <label>🌐 زبان</label>
+          <select id="langSelect">
+            <option value="fa-IR">فارسی</option>
+            <option value="en-US">انگلیسی (US)</option>
+            <option value="en-GB">انگلیسی (UK)</option>
+            <option value="ar-SA">عربی</option>
+            <option value="tr-TR">ترکی</option>
+            <option value="fr-FR">فرانسوی</option>
+            <option value="de-DE">آلمانی</option>
+            <option value="es-ES">اسپانیایی</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>🚀 سرعت: <span id="rateVal">۱.۰</span>×</label>
+          <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+        </div>
+        <div class="control">
+          <label>🎵 زیر و بمی: <span id="pitchVal">۱.۰</span></label>
+          <input type="range" id="pitch" min="0" max="2" step="0.1" value="1">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="speakBtn" class="primary-btn">▶️ پخش صدا</button>
+        <button id="pauseBtn" class="ghost-btn" disabled>⏸️ مکث</button>
+        <button id="stopBtn" class="ghost-btn" disabled>⏹️ توقف</button>
+        <button id="clearTtsBtn" class="ghost-btn">🗑️ پاک کردن</button>
+      </div>
+      <div class="note">💡 مرورگرها دانلود مستقیم خروجی صدا را پشتیبانی نمی‌کنند؛ برای ذخیره‌سازی، هم‌زمان با پخش از ضبط‌کننده سیستم استفاده کنید. برای صدای فارسی بهتر است از Chrome یا Edge استفاده کنید.</div>
+    </div>
+  </section>
+
+  <!-- ============ STT ============ -->
+  <section class="tab-panel" id="panel-stt" style="display:none">
+    <div class="card">
+      <label for="sttLang">🌐 زبان تشخیص گفتار</label>
+      <select id="sttLang">
+        <option value="fa-IR">فارسی</option>
+        <option value="en-US">انگلیسی (US)</option>
+        <option value="en-GB">انگلیسی (UK)</option>
+        <option value="ar-SA">عربی</option>
+        <option value="tr-TR">ترکی</option>
+        <option value="fr-FR">فرانسوی</option>
+        <option value="de-DE">آلمانی</option>
+        <option value="es-ES">اسپانیایی</option>
+      </select>
+      <div class="btn-row" style="margin-top:1rem">
+        <button id="startRecBtn" class="primary-btn">🎙️ شروع ضبط</button>
+        <button id="stopRecBtn" class="danger-btn" disabled>⏹️ توقف</button>
+      </div>
+      <div class="rec-indicator" id="recIndicator" style="display:none">
+        <span class="pulse"></span>
+        <span>در حال گوش دادن... صحبت کنید</span>
+      </div>
+      <div class="textarea-wrap" style="margin-top:1rem">
+        <textarea id="sttOutput" rows="8" placeholder="متن تشخیص داده‌شده اینجا ظاهر می‌شود..." readonly></textarea>
+        <div class="char-count" id="sttCount">۰ کلمه · ۰ کاراکتر</div>
+      </div>
+      <div class="btn-row">
+        <button id="copySttBtn" class="ghost-btn">📋 کپی</button>
+        <button id="downloadSttBtn" class="ghost-btn">⬇️ دانلود .txt</button>
+        <button id="clearSttBtn" class="ghost-btn">🗑️ پاک کردن</button>
+      </div>
+      <div class="note">💡 تشخیص گفتار زنده فقط در <b>Chrome و Edge</b> کار می‌کند و نیازمند اینترنت است. آپلود فایل صوتی نیاز به سرور دارد و در نسخه رایگان مرورگر پشتیبانی نمی‌شود.</div>
+    </div>
+  </section>
+
+  <!-- ============ SUMMARY ============ -->
+  <section class="tab-panel" id="panel-summary" style="display:none">
+    <div class="card">
+      <div class="label-row">
+        <label for="summaryText">📄 متن برای خلاصه‌سازی</label>
+        <button id="pasteSummaryBtn" class="link-btn">📋 چسباندن از کلیپ‌بورد</button>
+      </div>
+      <div class="textarea-wrap">
+        <textarea id="summaryText" rows="9" placeholder="متن طولانی خود را اینجا بنویسید یا بچسبانید..."></textarea>
+        <div class="char-count" id="summaryCount">۰ کلمه · ۰ کاراکتر</div>
+      </div>
+      <div class="divider"><span>یا</span></div>
+      <label for="summaryUrl">🔗 آدرس صفحه وب (استخراج خودکار متن)</label>
+      <div class="input-group">
+        <input type="url" id="summaryUrl" placeholder="https://example.com/article" autocomplete="url">
+        <button id="fetchUrlBtn" class="ghost-btn" style="flex-shrink:0">📥 دریافت متن</button>
+      </div>
+      <div class="controls-grid">
+        <div class="control">
+          <label>🤖 روش خلاصه‌سازی</label>
+          <select id="summaryMode">
+            <option value="ai">هوشمند (AI) — دقیق‌تر</option>
+            <option value="extractive">سریع (آفلاین) — بدون اینترنت</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>📏 طول خلاصه</label>
+          <select id="summaryLength">
+            <option value="short">کوتاه</option>
+            <option value="medium" selected>متوسط</option>
+            <option value="long">بلند</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="summarizeBtn" class="primary-btn">✨ تولید خلاصه</button>
+      </div>
+      <div class="result-box" id="summaryResult" style="display:none">
+        <div class="result-head">
+          <span>📝 خلاصه</span>
+          <div>
+            <button id="copySummaryBtn" class="mini-btn" title="کپی">📋</button>
+            <button id="downloadSummaryBtn" class="mini-btn" title="دانلود">⬇️</button>
+          </div>
+        </div>
+        <div class="result-text" id="summaryOutput"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EXPAND ============ -->
+  <section class="tab-panel" id="panel-expand" style="display:none">
+    <div class="card">
+      <div class="label-row">
+        <label for="expandText">📄 متن کوتاه برای گسترش</label>
+        <button id="pasteExpandBtn" class="link-btn">📋 چسباندن از کلیپ‌بورد</button>
+      </div>
+      <div class="textarea-wrap">
+        <textarea id="expandText" rows="7" placeholder="متن کوتاه یا خلاصه خود را بنویسید تا به متن کامل و بلند تبدیل شود..."></textarea>
+        <div class="char-count" id="expandCount">۰ کلمه · ۰ کاراکتر</div>
+      </div>
+      <div class="controls-grid">
+        <div class="control">
+          <label>🎭 سبک نوشتار</label>
+          <select id="expandStyle">
+            <option value="formal">رسمی</option>
+            <option value="friendly">دوستانه</option>
+            <option value="detailed">توضیحی و مفصل</option>
+            <option value="persuasive">متقاعدکننده</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>📏 طول خروجی: <span id="expandLenVal">متوسط</span></label>
+          <select id="expandLength">
+            <option value="short">کوتاه (۱.۵×)</option>
+            <option value="medium" selected>متوسط (۲×)</option>
+            <option value="long">بلند (۳×)</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="expandBtn" class="primary-btn">📖 گسترش متن</button>
+      </div>
+      <div class="result-box" id="expandResult" style="display:none">
+        <div class="result-head">
+          <span>📖 متن گسترش‌یافته</span>
+          <div>
+            <button id="copyExpandBtn" class="mini-btn" title="کپی">📋</button>
+            <button id="downloadExpandBtn" class="mini-btn" title="دانلود">⬇️</button>
+          </div>
+        </div>
+        <div class="result-text" id="expandOutput"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>ساخته شده با ❤️ | کاملاً رایگان و بدون ثبت‌نام</p>
+    <p><a href="https://github.com/AnishtayiN/ai-text-tools" target="_blank" rel="noopener">📂 سورس‌کد در گیت‌هاب</a></p>
+  </footer>
+</div>
+
+<div id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
