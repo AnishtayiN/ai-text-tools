@@ -1,5 +1,5 @@
 /* ============================================================
-   AI Text Tools — نسخه بازنویسی‌شده، بدون باگ
+   AI Text Tools — نسخه نهایی، کامل و بدون باگ
    ============================================================ */
 const $ = id => document.getElementById(id);
 
@@ -84,7 +84,6 @@ function loadVoices() {
     voiceLoadAttempts++;
     setTimeout(loadVoices, 300);
   } else {
-    // fallback: try once more after a delay
     setTimeout(()=>{
       const v = speechSynthesis.getVoices();
       if(v && v.length) { voices = v; voicesLoaded = true; populateVoiceList(); }
@@ -102,7 +101,6 @@ function populateVoiceList() {
     opt.textContent = v.name + ' (' + v.lang + ')';
     voiceSelect.appendChild(opt);
   });
-  // انتخاب فارسی
   const fa = voices.find(v=>v.lang && v.lang.startsWith('fa'));
   if(fa) {
     voiceSelect.value = fa.name;
@@ -110,7 +108,6 @@ function populateVoiceList() {
   } else if(langSelect) {
     langSelect.value = 'fa-IR';
   }
-  // فعال کردن دکمه‌ها
   if(speakBtn) speakBtn.disabled = false;
   if(pauseBtn) { pauseBtn.disabled = true; pauseBtn.textContent='⏸️ مکث'; }
   if(stopBtn) stopBtn.disabled = true;
@@ -120,13 +117,10 @@ if(!('speechSynthesis' in window)) {
   if(speakBtn) speakBtn.disabled = true;
   toast('⚠️ مرورگر پشتیبانی نمی‌کند.');
 } else {
-  // بارگذاری اولیه
   loadVoices();
-  // رویداد تغییر صداها
   if(speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = loadVoices;
   } else {
-    // fallback برای برخی مرورگرها
     setInterval(()=>{ if(!voicesLoaded) loadVoices(); }, 2000);
   }
 }
@@ -139,7 +133,6 @@ function getVoice() {
     if(found) return found;
   }
   const lang = langSelect ? langSelect.value : 'fa-IR';
-  // ابتدا زبان دقیق، سپس startsWith
   let v = voices.find(v=>v.lang===lang);
   if(!v) v = voices.find(v=>v.lang && v.lang.startsWith(lang.split('-')[0]));
   if(!v && voices.length) v = voices[0];
@@ -229,7 +222,7 @@ if(langSelect) {
 }
 
 /* ============================================================
-   2) SPEECH TO TEXT — بازنویسی با چک‌های کامل
+   2) SPEECH TO TEXT — پایدار
    ============================================================ */
 const sttLang = $('sttLang');
 const startRecBtn = $('startRecBtn');
@@ -273,7 +266,6 @@ function initRec() {
   };
   recognition.onend = function() {
     if(window.recording) {
-      // اگر هنوز ضبط فعال است، دوباره شروع کن
       try { recognition.start(); } catch(e) {}
     } else {
       stopRec();
@@ -401,7 +393,6 @@ if(summarizeBtn) {
         if(summaryOutput) summaryOutput.textContent = out;
         toast('✅ خلاصه آماده شد!');
       } else {
-        // AI mode: fallback به extractive (چون AI مرورگر در همه جا نیست)
         const n = Math.max(2, Math.round(text.split(/[.!?؟\n]/).filter(Boolean).length * ratio));
         const out = extractiveSummary(text, n);
         if(summaryOutput) summaryOutput.textContent = out;
@@ -473,7 +464,6 @@ function expandOffline(text, style, targetWords) {
     const c = pick(connectors, i);
     const s = pick(styleArr, i+1);
     const src = sents[i % sents.length] || base;
-    // regex درست: حذف کاراکترهای ابتدایی و براکت
     const cleanSrc = src.replace(/^[.!?؟]|\[/g, '').trim();
     out += ' ' + c + '، ' + s + '، ' + cleanSrc;
     i++;
@@ -507,6 +497,104 @@ if(copyExpandBtn) copyExpandBtn.onclick = ()=>{ if(expandOutput && expandOutput.
 const downloadExpandBtn=$('downloadExpandBtn');
 if(downloadExpandBtn) downloadExpandBtn.onclick = ()=>{ if(expandOutput && expandOutput.textContent.trim()) download('گسترش-متن.txt', expandOutput.textContent); else toast('⚠️ متنی وجود ندارد.'); };
 
+/* ============================================================
+   5) پنل‌های شناور: آمار، تاریخچه، راهنما
+   ============================================================ */
+const statsToggle=$('statsToggle');
+const statsPanel=$('statsPanel');
+const closeStats=$('closeStats');
+const statsContent=$('statsContent');
+
+if(statsToggle && statsPanel) {
+  statsToggle.onclick = ()=>{
+    statsPanel.style.display = statsPanel.style.display==='none' ? 'block' : 'none';
+    const historyPanel=$('historyPanel');
+    const helpPanel=$('helpPanel');
+    if(historyPanel) historyPanel.style.display='none';
+    if(helpPanel) helpPanel.style.display='none';
+    if(statsPanel.style.display==='block') updateStatsAndBookmarks();
+  };
+}
+if(closeStats) closeStats.onclick = ()=>{ if(statsPanel) statsPanel.style.display='none'; };
+
+function updateStatsAndBookmarks() {
+  if(!statsContent) return;
+  const stats = JSON.parse(localStorage.getItem('att-stats') || '{"count":0,"words":0,"mins":0}');
+  const bm = JSON.parse(localStorage.getItem('att-bookmarks') || '[]');
+  statsContent.innerHTML = `
+    <div class="stat-row"><span>📚 مقالات خوانده‌شده:</span><strong>${fa(stats.count)}</strong></div>
+    <div class="stat-row"><span>📝 کلمات:</span><strong>${fa(stats.words)}</strong></div>
+    <div class="stat-row"><span>⏱ زمان مطالعه:</span><strong>${fa(stats.mins)} دقیقه</strong></div>
+    <div class="stat-row"><span>⭐ نشانک‌ها:</span><strong>${fa(bm.length)}</strong></div>
+  `;
+  const list = document.getElementById('bookmarksList');
+  if(!list) return;
+  if(!bm.length) { list.innerHTML='<div class="bm-empty">نشانکی وجود ندارد.</div>'; return; }
+  list.innerHTML = bm.map((item,i)=>`
+    <div class="bm-item">
+      <div class="bm-head"><strong>${esc(item.title)}</strong><button class="bm-del" data-idx="${i}">✕</button></div>
+      <div class="bm-url">${esc(item.url)}</div>
+      ${item.note ? `<div class="bm-note">${esc(item.note)}</div>` : ''}
+      <div class="bm-date">${new Date(item.date).toLocaleDateString('fa-IR')}</div>
+    </div>
+  `).join('');
+  list.querySelectorAll('.bm-del').forEach(btn=>{
+    btn.onclick = (e)=>{
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx);
+      const bm2 = JSON.parse(localStorage.getItem('att-bookmarks') || '[]');
+      bm2.splice(idx,1);
+      localStorage.setItem('att-bookmarks', JSON.stringify(bm2));
+      updateStatsAndBookmarks();
+      toast('🗑️ نشانک حذف شد.');
+    };
+  });
+}
+
+// History panel
+const historyToggle=$('historyToggle');
+const historyPanel=$('historyPanel');
+const closeHistory=$('closeHistory');
+
+if(historyToggle && historyPanel) {
+  historyToggle.onclick = ()=>{
+    historyPanel.style.display = historyPanel.style.display==='none' ? 'block' : 'none';
+    if(statsPanel) statsPanel.style.display='none';
+    const helpPanel=$('helpPanel');
+    if(helpPanel) helpPanel.style.display='none';
+    if(historyPanel.style.display==='block') renderHistory();
+  };
+}
+if(closeHistory) closeHistory.onclick = ()=>{ if(historyPanel) historyPanel.style.display='none'; };
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if(!list) return;
+  const hist = JSON.parse(localStorage.getItem('att-history') || '[]');
+  if(!hist.length) { list.innerHTML='<div class="bm-empty">تاریخچه خالی است.</div>'; return; }
+  list.innerHTML = hist.map((item,i)=>`
+    <div class="bm-item">
+      <div class="bm-head"><strong>${esc(item.title)}</strong></div>
+      <div class="bm-url">${esc(item.url)}</div>
+      <div class="bm-date">${new Date(item.date).toLocaleString('fa-IR')}</div>
+    </div>
+  `).join('');
+}
+
+// Help panel
+const helpToggle=$('helpToggle');
+const helpPanel=$('helpPanel');
+const closeHelp=$('closeHelp');
+
+if(helpToggle && helpPanel) {
+  helpToggle.onclick = ()=>{
+    helpPanel.style.display = helpPanel.style.display==='none' ? 'block' : 'none';
+    if(statsPanel) statsPanel.style.display='none';
+    if(historyPanel) historyPanel.style.display='none';
+  };
+}
+if(closeHelp) closeHelp.onclick = ()=>{ if(helpPanel) helpPanel.style.display='none'; };
+
 /* ---------- keyboard ---------- */
 document.addEventListener('keydown', e=>{
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k') {
@@ -523,3 +611,5 @@ document.addEventListener('keydown', e=>{
 if('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
+
+toast('🚀 خوش آمدید!');

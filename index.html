@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ابزارهای هوشمند متن و صدا | AI Text Tools</title>
-<meta name="description" content="تبدیل متن به صدا، تشخیص گفتار، خلاصه‌سازی و گسترش متن — کاملاً رایگان و بدون ثبت‌نام">
-<meta name="theme-color" content="#0a0a1a">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
-<link rel="stylesheet" href="styles.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ابزارهای هوشمند متن و صدا | AI Text Tools</title>
+  <meta name="description" content="تبدیل متن به صدا، تشخیص گفتار، خلاصه‌سازی و گسترش متن — کاملاً رایگان، بدون ثبت‌نام، بدون سرور">
+  <meta name="theme-color" content="#0a0a1a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
 <div id="progressBar"></div>
@@ -20,7 +20,9 @@
   <header>
     <div class="topbar">
       <button id="themeToggle" class="icon-btn" title="تغییر تم">🌙</button>
-      <button id="statsToggle" class="icon-btn" title="آمار">📊</button>
+      <button id="statsToggle" class="icon-btn" title="آمار و نشانک‌ها">📊</button>
+      <button id="historyToggle" class="icon-btn" title="تاریخچه">🕘</button>
+      <button id="helpToggle" class="icon-btn" title="راهنما">❓</button>
     </div>
     <div class="logo">
       <span class="logo-icon">🧠</span>
@@ -29,173 +31,208 @@
     <p class="subtitle">متن ↔ صدا · خلاصه‌سازی · گسترش متن — رایگان، بدون ثبت‌نام</p>
   </header>
 
-  <!-- تب‌ها -->
-  <div class="tabs">
+  <!-- Tab Navigation -->
+  <nav class="tab-nav">
     <button class="tab active" data-tab="tts">🗣️ متن به صدا</button>
     <button class="tab" data-tab="stt">🎤 صدا به متن</button>
     <button class="tab" data-tab="summary">📝 خلاصه‌سازی</button>
     <button class="tab" data-tab="expand">📖 گسترش متن</button>
-  </div>
+  </nav>
 
-  <!-- ==================== پنل ۱: متن به صدا ==================== -->
-  <div id="panel-tts" class="tab-panel card">
-    <h2 style="margin-bottom:.5rem">🗣️ تبدیل متن به گفتار</h2>
-    <p style="color:var(--text-muted);margin-bottom:1rem">متن را بنویسید، صدا را انتخاب کنید و بشنوید.</p>
-
-    <div class="toolbar">
-      <select id="langSelect" style="width:auto;min-width:120px;padding:.4rem .8rem">
-        <option value="fa-IR">فارسی</option>
-        <option value="en-US">انگلیسی (US)</option>
-        <option value="en-GB">انگلیسی (UK)</option>
-        <option value="ar-SA">عربی</option>
-        <option value="fr-FR">فرانسوی</option>
-        <option value="de-DE">آلمانی</option>
-        <option value="es-ES">اسپانیایی</option>
-        <option value="it-IT">ایتالیایی</option>
-      </select>
-      <select id="voiceSelect" style="width:auto;min-width:180px;padding:.4rem .8rem">
-        <option value="">🎙️ پیش‌فرض</option>
-      </select>
-      <span class="tool-sep"></span>
-      <span class="range-group">
-        <span>سرعت</span>
-        <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
-        <span id="rateVal">1.0</span>
-      </span>
-      <span class="range-group">
-        <span>زیر و بم</span>
-        <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
-        <span id="pitchVal">1.0</span>
-      </span>
-    </div>
-
-    <textarea id="ttsText" rows="6" placeholder="متن خود را اینجا بنویسید..."></textarea>
-    <div class="count-badge" id="ttsCount">۰ کلمه · ۰ کاراکتر</div>
-
-    <div class="btn-row">
-      <button class="btn-primary" id="speakBtn">▶️ پخش</button>
-      <button class="btn-secondary" id="pauseBtn" disabled>⏸️ مکث</button>
-      <button class="btn-secondary" id="stopBtn" disabled>⏹ توقف</button>
-      <button class="btn-secondary" id="clearTtsBtn">🗑️ پاک‌کردن</button>
-    </div>
-  </div>
-
-  <!-- ==================== پنل ۲: صدا به متن ==================== -->
-  <div id="panel-stt" class="tab-panel card" style="display:none">
-    <h2 style="margin-bottom:.5rem">🎤 تشخیص گفتار زنده</h2>
-    <p style="color:var(--text-muted);margin-bottom:1rem">میکروفون را فعال کنید و صحبت کنید — متن به‌صورت لحظه‌ای نوشته می‌شود.</p>
-
-    <div class="toolbar">
-      <select id="sttLang" style="width:auto;min-width:120px;padding:.4rem .8rem">
-        <option value="fa-IR">فارسی</option>
-        <option value="en-US">انگلیسی (US)</option>
-        <option value="ar-SA">عربی</option>
-        <option value="fr-FR">فرانسوی</option>
-        <option value="de-DE">آلمانی</option>
-        <option value="es-ES">اسپانیایی</option>
-      </select>
-      <span class="tool-sep"></span>
-      <button class="btn-primary" id="startRecBtn">🎙️ شروع ضبط</button>
-      <button class="btn-secondary" id="stopRecBtn" disabled>⏹ توقف</button>
-      <div class="rec-indicator" id="recIndicator"><span class="dot"></span> در حال ضبط...</div>
-    </div>
-
-    <textarea id="sttOutput" rows="8" placeholder="متن تشخیص‌داده‌شده اینجا ظاهر می‌شود..." readonly></textarea>
-    <div class="count-badge" id="sttCount">۰ کلمه · ۰ کاراکتر</div>
-
-    <div class="btn-row">
-      <button class="btn-secondary" id="copySttBtn">📋 کپی</button>
-      <button class="btn-secondary" id="downloadSttBtn">⬇️ دانلود</button>
-      <button class="btn-secondary" id="clearSttBtn">🗑️ پاک‌کردن</button>
-    </div>
-  </div>
-
-  <!-- ==================== پنل ۳: خلاصه‌سازی ==================== -->
-  <div id="panel-summary" class="tab-panel card" style="display:none">
-    <h2 style="margin-bottom:.5rem">📝 خلاصه‌سازی هوشمند</h2>
-    <p style="color:var(--text-muted);margin-bottom:1rem">متن طولانی را خلاصه کنید یا از آدرس وب، متن را استخراج کنید.</p>
-
-    <div class="toolbar">
-      <select id="summaryMode" style="width:auto;min-width:120px;padding:.4rem .8rem">
-        <option value="extractive">سریع (آفلاین)</option>
-        <option value="ai">هوشمند (AI مرورگر)</option>
-      </select>
-      <select id="summaryLength" style="width:auto;min-width:100px;padding:.4rem .8rem">
-        <option value="short">کوتاه</option>
-        <option value="medium" selected>متوسط</option>
-        <option value="long">بلند</option>
-      </select>
-      <span class="tool-sep"></span>
-      <div style="display:flex;gap:.4rem;flex:1;flex-wrap:wrap">
-        <input type="url" id="summaryUrl" placeholder="https://example.com" style="flex:1;min-width:160px">
-        <button class="btn-secondary" id="fetchUrlBtn">📥 دریافت از وب</button>
+  <!-- Panel 1: TTS -->
+  <section class="tab-panel" id="panel-tts" style="display:block">
+    <div class="card">
+      <h2>🗣️ تبدیل متن به گفتار</h2>
+      <div class="input-group">
+        <textarea id="ttsText" rows="5" placeholder="متن فارسی یا انگلیسی خود را اینجا بنویسید..."></textarea>
+        <div class="count" id="ttsCount">۰ کلمه · ۰ کاراکتر</div>
+      </div>
+      <div class="controls-grid">
+        <div class="control-item">
+          <label>زبان</label>
+          <select id="langSelect">
+            <option value="fa-IR">فارسی</option>
+            <option value="en-US">انگلیسی</option>
+            <option value="ar-SA">عربی</option>
+            <option value="tr-TR">ترکی</option>
+            <option value="de-DE">آلمانی</option>
+            <option value="fr-FR">فرانسوی</option>
+            <option value="es-ES">اسپانیایی</option>
+            <option value="ru-RU">روسی</option>
+          </select>
+        </div>
+        <div class="control-item">
+          <label>صدا</label>
+          <select id="voiceSelect"><option value="">🎙️ خودکار</option></select>
+        </div>
+        <div class="control-item">
+          <label>سرعت: <span id="rateVal">1.0</span></label>
+          <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+        </div>
+        <div class="control-item">
+          <label>زیر و بم: <span id="pitchVal">1.0</span></label>
+          <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="speakBtn" class="btn-primary">▶️ پخش</button>
+        <button id="pauseBtn" class="btn-secondary" disabled>⏸️ مکث</button>
+        <button id="stopBtn" class="btn-secondary" disabled>⏹ توقف</button>
+        <button id="clearTtsBtn" class="btn-secondary">🗑️ پاک</button>
       </div>
     </div>
+  </section>
 
-    <textarea id="summaryText" rows="6" placeholder="متن خود را برای خلاصه‌سازی وارد کنید..."></textarea>
-    <div class="count-badge" id="summaryCount">۰ کلمه · ۰ کاراکتر</div>
-    <div class="btn-row">
-      <button class="btn-secondary" id="pasteSummaryBtn">📋 چسباندن</button>
-      <button class="btn-primary" id="summarizeBtn">✨ تولید خلاصه</button>
-    </div>
-
-    <div id="summaryResult" class="result-box" style="display:none;margin-top:1rem">
-      <div id="summaryOutput"></div>
-      <div class="btn-row" style="margin-top:.6rem">
-        <button class="btn-secondary" id="copySummaryBtn">📋 کپی</button>
-        <button class="btn-secondary" id="downloadSummaryBtn">⬇️ دانلود</button>
+  <!-- Panel 2: STT -->
+  <section class="tab-panel" id="panel-stt" style="display:none">
+    <div class="card">
+      <h2>🎤 تشخیص گفتار (صدا به متن)</h2>
+      <div class="input-group">
+        <select id="sttLang">
+          <option value="fa-IR">فارسی</option>
+          <option value="en-US">انگلیسی</option>
+          <option value="ar-SA">عربی</option>
+          <option value="tr-TR">ترکی</option>
+          <option value="de-DE">آلمانی</option>
+          <option value="fr-FR">فرانسوی</option>
+          <option value="es-ES">اسپانیایی</option>
+          <option value="ru-RU">روسی</option>
+        </select>
+        <div class="btn-row">
+          <button id="startRecBtn" class="btn-primary">🎤 شروع ضبط</button>
+          <button id="stopRecBtn" class="btn-secondary" disabled>⏹ توقف</button>
+        </div>
+      </div>
+      <div id="recIndicator" class="rec-indicator" style="display:none">🔴 در حال ضبط...</div>
+      <textarea id="sttOutput" rows="6" readonly placeholder="متن تشخیص داده‌شده اینجا ظاهر می‌شود..."></textarea>
+      <div class="count" id="sttCount">۰ کلمه · ۰ کاراکتر</div>
+      <div class="btn-row">
+        <button id="copySttBtn" class="btn-secondary">📋 کپی</button>
+        <button id="downloadSttBtn" class="btn-secondary">⬇️ دانلود</button>
+        <button id="clearSttBtn" class="btn-secondary">🗑️ پاک</button>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ==================== پنل ۴: گسترش متن ==================== -->
-  <div id="panel-expand" class="tab-panel card" style="display:none">
-    <h2 style="margin-bottom:.5rem">📖 گسترش متن</h2>
-    <p style="color:var(--text-muted);margin-bottom:1rem">متن کوتاه را به یک متن بلند و کامل با سبک دلخواه تبدیل کنید.</p>
-
-    <div class="toolbar">
-      <select id="expandStyle" style="width:auto;min-width:120px;padding:.4rem .8rem">
-        <option value="formal">رسمی</option>
-        <option value="friendly">دوستانه</option>
-        <option value="persuasive">قانع‌کننده</option>
-      </select>
-      <select id="expandLength" style="width:auto;min-width:100px;padding:.4rem .8rem">
-        <option value="short">کمی بیشتر</option>
-        <option value="medium" selected>دو برابر</option>
-        <option value="long">سه برابر</option>
-      </select>
-      <span id="expandLenVal" style="color:var(--text-muted);font-size:.9rem">دو برابر</span>
-    </div>
-
-    <textarea id="expandText" rows="5" placeholder="متن کوتاه خود را بنویسید..."></textarea>
-    <div class="count-badge" id="expandCount">۰ کلمه · ۰ کاراکتر</div>
-    <div class="btn-row">
-      <button class="btn-secondary" id="pasteExpandBtn">📋 چسباندن</button>
-      <button class="btn-primary" id="expandBtn">🚀 گسترش متن</button>
-    </div>
-
-    <div id="expandResult" class="result-box" style="display:none;margin-top:1rem">
-      <div id="expandOutput"></div>
-      <div class="btn-row" style="margin-top:.6rem">
-        <button class="btn-secondary" id="copyExpandBtn">📋 کپی</button>
-        <button class="btn-secondary" id="downloadExpandBtn">⬇️ دانلود</button>
+  <!-- Panel 3: Summarization -->
+  <section class="tab-panel" id="panel-summary" style="display:none">
+    <div class="card">
+      <h2>📝 خلاصه‌سازی هوشمند</h2>
+      <div class="input-group">
+        <textarea id="summaryText" rows="5" placeholder="متن طولانی را اینجا بچسبانید..."></textarea>
+        <div class="count" id="summaryCount">۰ کلمه · ۰ کاراکتر</div>
+      </div>
+      <div class="controls-grid">
+        <div class="control-item">
+          <label>حالت</label>
+          <select id="summaryMode">
+            <option value="extractive">استخراجی (سریع)</option>
+            <option value="ai">هوشمند (AI مرورگر)</option>
+          </select>
+        </div>
+        <div class="control-item">
+          <label>طول خلاصه</label>
+          <select id="summaryLength">
+            <option value="short">کوتاه</option>
+            <option value="medium" selected>متوسط</option>
+            <option value="long">بلند</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="summarizeBtn" class="btn-primary">✨ تولید خلاصه</button>
+        <button id="pasteSummaryBtn" class="btn-secondary">📋 چسباندن</button>
+        <button id="fetchUrlBtn" class="btn-secondary">🌐 از URL</button>
+      </div>
+      <input type="url" id="summaryUrl" placeholder="https://example.com" class="url-input">
+      <div id="summaryResult" class="result-box" style="display:none">
+        <div id="summaryOutput" class="result-text"></div>
+        <div class="btn-row">
+          <button id="copySummaryBtn" class="btn-secondary">📋 کپی</button>
+          <button id="downloadSummaryBtn" class="btn-secondary">⬇️ دانلود</button>
+        </div>
       </div>
     </div>
+  </section>
+
+  <!-- Panel 4: Expand -->
+  <section class="tab-panel" id="panel-expand" style="display:none">
+    <div class="card">
+      <h2>📖 گسترش متن</h2>
+      <div class="input-group">
+        <textarea id="expandText" rows="5" placeholder="متن کوتاه یا خلاصه را اینجا بنویسید..."></textarea>
+        <div class="count" id="expandCount">۰ کلمه · ۰ کاراکتر</div>
+      </div>
+      <div class="controls-grid">
+        <div class="control-item">
+          <label>سبک</label>
+          <select id="expandStyle">
+            <option value="formal">رسمی</option>
+            <option value="friendly">دوستانه</option>
+            <option value="persuasive">اقناعی</option>
+            <option value="mixed">ترکیبی</option>
+          </select>
+        </div>
+        <div class="control-item">
+          <label>طول: <span id="expandLenVal">متوسط</span></label>
+          <select id="expandLength">
+            <option value="short">کوتاه (۱.۵x)</option>
+            <option value="medium" selected>متوسط (۲x)</option>
+            <option value="long">بلند (۳x)</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="expandBtn" class="btn-primary">📈 گسترش</button>
+        <button id="pasteExpandBtn" class="btn-secondary">📋 چسباندن</button>
+      </div>
+      <div id="expandResult" class="result-box" style="display:none">
+        <div id="expandOutput" class="result-text"></div>
+        <div class="btn-row">
+          <button id="copyExpandBtn" class="btn-secondary">📋 کپی</button>
+          <button id="downloadExpandBtn" class="btn-secondary">⬇️ دانلود</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Panel (floating) -->
+  <div id="statsPanel" class="floating-panel" style="display:none">
+    <div class="panel-header">
+      <span>📊 آمار و نشانک‌ها</span>
+      <button id="closeStats" class="icon-btn-sm">✕</button>
+    </div>
+    <div id="statsContent"></div>
+    <hr>
+    <div id="bookmarksList"></div>
   </div>
 
-  <!-- پنل آمار -->
-  <div id="statsPanel" class="card" style="display:none;margin-top:1rem">
-    <h3>📊 آمار استفاده</h3>
-    <div class="stats-grid" id="statsGrid">
-      <div class="stat-card"><div class="num" id="statArticles">۰</div><div class="label">متن‌های خوانده شده</div></div>
-      <div class="stat-card"><div class="num" id="statWords">۰</div><div class="label">کلمات خوانده شده</div></div>
-      <div class="stat-card"><div class="num" id="statMins">۰</div><div class="label">دقیقه مطالعه</div></div>
-      <div class="stat-card"><div class="num" id="statTTS">۰</div><div class="label">تبدیل به صدا</div></div>
+  <!-- History Panel -->
+  <div id="historyPanel" class="floating-panel" style="display:none">
+    <div class="panel-header">
+      <span>🕘 تاریخچه</span>
+      <button id="closeHistory" class="icon-btn-sm">✕</button>
     </div>
+    <div id="historyList"></div>
+  </div>
+
+  <!-- Help Panel -->
+  <div id="helpPanel" class="floating-panel" style="display:none">
+    <div class="panel-header">
+      <span>❓ راهنما</span>
+      <button id="closeHelp" class="icon-btn-sm">✕</button>
+    </div>
+    <ul>
+      <li>🗣️ <strong>متن به صدا:</strong> متن بنویسید، زبان و صدا را انتخاب کنید و پخش کنید.</li>
+      <li>🎤 <strong>صدا به متن:</strong> دکمه ضبط را بزنید و صحبت کنید — تشخیص خودکار.</li>
+      <li>📝 <strong>خلاصه‌سازی:</strong> متن طولانی یا URL را وارد کنید و خلاصه بگیرید.</li>
+      <li>📖 <strong>گسترش متن:</strong> متن کوتاه را با سبک دلخواه طولانی‌تر کنید.</li>
+      <li>⌨️ <strong>میانبر:</strong> <code>Ctrl+K</code> فوکوس روی جعبه متن فعال.</li>
+    </ul>
   </div>
 
   <footer>
-    <p>ساخته شده با ❤️ | کاملاً رایگان و بدون ثبت‌نام</p>
+    <p>ساخته شده با ❤️ | کاملاً رایگان · بدون ثبت‌نام · بدون سرور</p>
     <p><a href="https://github.com/AnishtayiN/ai-text-tools" target="_blank" rel="noopener">📂 سورس‌کد در گیت‌هاب</a></p>
   </footer>
 </div>
