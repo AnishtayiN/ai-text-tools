@@ -4,9 +4,9 @@ const $=id=>document.getElementById(id);
 /* ---------- helpers ---------- */
 function esc(t){const d=document.createElement('div');d.textContent=t??'';return d.innerHTML;}
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
-function wc(t){return t.trim()?t.trim().split(/\s+/).length:0;}
+function wc(t){return t.trim()?t.trim().split(/\\s+/).length:0;}
 function fa(n){return n.toLocaleString('fa-IR');}
-function slug(s){return (s||'خروجی').replace(/[^\w\u0600-\u06FF]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50)||'خروجی';}
+function slug(s){return (s||'خروجی').replace(/[^\\w\\u0600-\\u06FF]+/g,'-').replace(/^-+|-+$/g,'').slice(0,50)||'خروجی';}
 function download(name,content,type='text/plain;charset=utf-8'){
   const b=new Blob([content],{type});const a=document.createElement('a');
   a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href);
@@ -54,13 +54,18 @@ if(!('speechSynthesis' in window)){
 }else{
   function loadVoices(){
     voices=speechSynthesis.getVoices();
-    if(!voices.length)return;
+    if(!voices.length){setTimeout(loadVoices,200);return;}
     voiceSelect.innerHTML='<option value="">🎙️ پیش‌فرض (خودکار)</option>'+voices
       .filter(v=>v.lang)
       .map(v=>`<option value="${esc(v.name)}" data-lang="${esc(v.lang)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
-    // preselect Persian voice if available
+    // preselect Persian voice if available, else set language to Persian
     const faVoice=voices.find(v=>v.lang.startsWith('fa'));
-    if(faVoice)voiceSelect.value=faVoice.name;
+    if(faVoice){
+      voiceSelect.value=faVoice.name;
+      langSelect.value='fa-IR';
+    }else{
+      langSelect.value='fa-IR';
+    }
   }
   loadVoices();
   speechSynthesis.onvoiceschanged=loadVoices;
@@ -88,7 +93,7 @@ speakBtn.onclick=()=>{
   if(!text){toast('⚠️ لطفاً متنی بنویسید.');return;}
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
-  u.lang=langSelect.value;
+  u.lang=langSelect.value; // set to Persian (fa-IR) by default
   u.rate=Number(rate.value);
   u.pitch=Number(pitch.value);
   const v=getVoice();if(v)u.voice=v;
@@ -121,7 +126,7 @@ let finalText='';
 
 function initRec(){
   recognition=new SR();
-  recognition.lang=sttLang.value;
+  recognition.lang=sttLang.value; // Persian by default
   recognition.continuous=true;
   recognition.interimResults=true;
   recognition.onresult=e=>{
@@ -148,7 +153,7 @@ function startRecognition(){
   finalText='';
   sttOutput.value='';
   $('sttCount').textContent='۰ کلمه · ۰ کاراکتر';
-  recognition.lang=sttLang.value;
+  if(recognition) recognition.lang=sttLang.value;
   recognition.start();
   window.recording=true;
   startRecBtn.disabled=true;stopRecBtn.disabled=false;
@@ -186,7 +191,7 @@ $('fetchUrlBtn').onclick=async()=>{
     const r=await fetch('https://r.jina.ai/'+u,{headers:{'Accept':'text/markdown'}});
     if(!r.ok)throw new Error('خطای '+r.status);
     const t=await r.text();
-    const clean=t.replace(/^Title:[^\n]*\n/m,'').replace(/^URL Source:[^\n]*\n/m,'').replace(/^Published Time:[^\n]*\n/m,'').replace(/^Markdown Content:\s*\n?/m,'').trim();
+    const clean=t.replace(/^Title:[^\\n]*\\n/m,'').replace(/^URL Source:[^\\n]*\\n/m,'').replace(/^Published Time:[^\\n]*\\n/m,'').replace(/^Markdown Content:\\s*\\n?/m,'').trim();
     if(!clean)throw new Error('صفحه خالی بود.');
     summaryText.value=clean;
     $('summaryCount').textContent=`${fa(wc(clean))} کلمه · ${fa(clean.length)} کاراکتر`;
@@ -197,13 +202,13 @@ $('fetchUrlBtn').onclick=async()=>{
 
 /* Extractive (offline) summarizer */
 function extractiveSummary(text,n){
-  const sents=text.replace(/\s+/g,' ').split(/(?<=[.!?؟\n])\s+/).filter(s=>s.trim().length>20);
+  const sents=text.replace(/\\s+/g,' ').split(/(?<=[.!?؟\\n])\\s+/).filter(s=>s.trim().length>20);
   if(sents.length<=n)return sents.join(' ');
   const freq={};
-  sents.forEach(s=>s.split(/\s+/).forEach(w=>{w=w.toLowerCase().replace(/[^\w\u0600-\u06FF]/g,'');if(w.length>2)freq[w]=(freq[w]||0)+1;}));
+  sents.forEach(s=>s.split(/\\s+/).forEach(w=>{w=w.toLowerCase().replace(/[^\\w\\u0600-\\u06FF]/g,'');if(w.length>2)freq[w]=(freq[w]||0)+1;}));
   const scored=sents.map((s,i)=>({
     i,s,
-    score:s.split(/\s+/).reduce((a,w)=>{w=w.toLowerCase().replace(/[^\w\u0600-\u06FF]/g,'');return a+(freq[w]||0);},0)
+    score:s.split(/\\s+/).reduce((a,w)=>{w=w.toLowerCase().replace(/[^\\w\\u0600-\\u06FF]/g,'');return a+(freq[w]||0);},0)
   }));
   scored.sort((a,b)=>b.score-a.score);
   const top=scored.slice(0,n).sort((a,b)=>a.i-b.i);
@@ -220,7 +225,7 @@ summarizeBtn.onclick=async()=>{
   summaryOutput.innerHTML='<div class="loading">⏳ در حال تولید خلاصه...</div>';
   try{
     if(summaryMode.value==='extractive'||text.length>30000){
-      const n=Math.max(2,Math.round(text.split(/[.!?؟\n]/).filter(Boolean).length*ratio));
+      const n=Math.max(2,Math.round(text.split(/[.!?؟\\n]/).filter(Boolean).length*ratio));
       const out=extractiveSummary(text,n);
       summaryOutput.textContent=out;
       toast('✅ خلاصه آماده شد!');
@@ -244,14 +249,14 @@ summarizeBtn.onclick=async()=>{
         }
       }catch{}
       if(!aiDone){
-        const n=Math.max(2,Math.round(text.split(/[.!?؟\n]/).filter(Boolean).length*ratio));
+        const n=Math.max(2,Math.round(text.split(/[.!?؟\\n]/).filter(Boolean).length*ratio));
         const out=extractiveSummary(text,n);
         summaryOutput.textContent=out;
         toast('ℹ️ AI مرورگر در دسترس نبود؛ خلاصه سریع تولید شد.');
       }
     }
   }catch(e){
-    const n=Math.max(2,Math.round(text.split(/[.!?؟\n]/).filter(Boolean).length*ratio));
+    const n=Math.max(2,Math.round(text.split(/[.!?؟\\n]/).filter(Boolean).length*ratio));
     summaryOutput.textContent=extractiveSummary(text,n);
     toast('ℹ️ خلاصه سریع (آفلاین) تولید شد.');
   }
@@ -284,11 +289,11 @@ function expandOffline(text,style,targetWords){
 
   const base=text.trim();
   let out=base;
-  const words=base.split(/\s+/);
+  const words=base.split(/\\s+/);
   const target=Math.min(targetWords, base.length>100?targetWords:120);
 
   const styleArr=style==='formal'?formal:style==='friendly'?friendly:style==='persuasive'?persuasive:[...formal,...friendly];
-  const sents=base.split(/(?<=[.!?؟\n])\s+/).filter(Boolean);
+  const sents=base.split(/(?<=[.!?؟\\n])\\s+/).filter(Boolean);
   let i=0;
   while(wc(out)<target&&i<40){
     const c=pick(connectors,i);
